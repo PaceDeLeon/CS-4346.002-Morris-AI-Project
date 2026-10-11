@@ -52,11 +52,18 @@ def generate_moves(board: str, player: str, phase: str) -> list[str]:
 
         return generate_moves_midgame(board, player)
 
-    # Flying is allowed when the player has exactly three pieces.
-    if count_pieces(board, player) != 3:
+    
+    # In the endgame, a player with exactly three pieces may fly.
+    # A player with more than three pieces must move to an adjacent
+    # empty location. A player with fewer than three cannot continue.
+    if count_pieces(board, player) < 3:
         return []
 
-    return generate_moves_endgame(board, player)
+    if count_pieces(board, player) == 3:
+        return generate_moves_endgame(board, player)
+
+    return generate_moves_midgame(board, player)
+
 
 
 
