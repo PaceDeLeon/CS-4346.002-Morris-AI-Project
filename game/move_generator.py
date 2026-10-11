@@ -43,7 +43,7 @@ def generate_moves(board: str, player: str, phase: str) -> list[str]:
         )
 
     if phase == OPENING:
-        return generate_moves_opening(boardS, player)
+        return generate_moves_opening(board, player)
 
     if phase == MIDGAME:
         # A player with fewer than three pieces cannot continue.
