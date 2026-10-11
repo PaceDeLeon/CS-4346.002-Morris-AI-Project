@@ -1,0 +1,2 @@
+"""ONCE EVALUATION IS CREATED FIX MINIMAX to connect to the static evaluation with the function name.
+ We also need to import this file with the function as well. Will also need to update win score (+10000 -10000 as its just a place holder in minimax.py)"""
