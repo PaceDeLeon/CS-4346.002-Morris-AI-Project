@@ -50,21 +50,11 @@ def minimax(
     if not callable(evaluate):
         raise TypeError("evaluate must be a callable function.")
 
-    # Check whether the game has already been won.
-    terminal_score = _piece_terminal_score(board, phase)
-    if terminal_score is not None:
-        return MinimaxResult(board, terminal_score, 0)
-
-    # Generate all legal moves for the current player.
     moves = generate_moves(board, player, phase)
 
-    # Handle a position where the current player cannot move.
+    # No legal move: none to choose, return static estimate
     if not moves:
-        if phase == OPENING:
-            return MinimaxResult(board, evaluate(board), 1)
-
-        score = -WIN_SCORE if player == WHITE else WIN_SCORE
-        return MinimaxResult(board, score, 0)
+        return MinimaxResult(board, evaluate(board), 1)
 
     # White is MAX; Black is MIN.
     maximizing = player == WHITE
@@ -98,7 +88,6 @@ def minimax(
         positions_evaluated=positions_evaluated,
     )
 
-
 def _search(
     board: str,
     depth: int,
@@ -108,23 +97,14 @@ def _search(
 ) -> tuple[int | float, int]:
     """Search a subtree and return its score and static-evaluation count."""
 
-    # A win/loss score is not a static evaluation.
-    terminal_score = _piece_terminal_score(board, phase)
-    if terminal_score is not None:
-        return terminal_score, 0
+    # At depth zero, score this leaf with the static estimate.
+    if depth == 0:
+        return evaluate(board), 1
 
     moves = generate_moves(board, player, phase)
 
-    # A player who cannot move loses outside the opening phase.
+    # No moves available; treat as leaf & use static estimate
     if not moves:
-        if phase == OPENING:
-            return evaluate(board), 1
-
-        score = -WIN_SCORE if player == WHITE else WIN_SCORE
-        return score, 0
-
-    # At depth zero, score this leaf with the supplied evaluation function.
-    if depth == 0:
         return evaluate(board), 1
 
     next_player = _opponent(player)
@@ -150,23 +130,6 @@ def _search(
             best_score = min(best_score, score)
 
     return best_score, positions_evaluated
-
-
-def _piece_terminal_score(board: str, phase: str) -> int | None:
-    """Return a terminal score when a player has fewer than three pieces."""
-
-    # Piece-count wins do not apply during the opening phase.
-    if phase == OPENING:
-        return None
-
-    if count_pieces(board, BLACK) <= 2:
-        return WIN_SCORE
-
-    if count_pieces(board, WHITE) <= 2:
-        return -WIN_SCORE
-
-    return None
-
 
 def _opponent(player: str) -> str:
     """Return the opposing player."""
