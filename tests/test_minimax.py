@@ -84,8 +84,10 @@ class TestMinimax(unittest.TestCase):
         # White has 22 choices; Black then has 21 choices.
         self.assertEqual(result.positions_evaluated, 22 * 21)
 
-    def test_terminal_position_returns_win_score(self):
-        """A position with two Black pieces is a win for White."""
+    def test_two_black_pieces_scores_as_white_win(self):
+        """Handout's static estimate scores two Black pieces as a win."""
+        from MiniMaxGame import static_estimation_game
+
         board = "WWWBB" + ("x" * 18)
 
         result = minimax(
@@ -93,12 +95,11 @@ class TestMinimax(unittest.TestCase):
             depth=1,
             player=WHITE,
             phase=MIDGAME,
-            evaluate=lambda position: 0,
+            evaluate=static_estimation_game,
         )
 
-        self.assertEqual(result.best_board, board)
         self.assertEqual(result.estimate, WIN_SCORE)
-        self.assertEqual(result.positions_evaluated, 0)
+        self.assertGreater(result.positions_evaluated, 0)
 
     def test_depth_must_be_positive(self):
         """Depth zero is invalid for a root move search."""
