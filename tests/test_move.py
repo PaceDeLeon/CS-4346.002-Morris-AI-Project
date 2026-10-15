@@ -110,7 +110,7 @@ class TestMoveGenerator(unittest.TestCase):
         self.assertEqual(moves[0][1], BLACK)
         self.assertEqual(moves[0][2], BLACK)
 
-    def test_can_remove_piece_from_mill_if_all_opponent_pieces_in_mills(self):
+    def test_removes_nothing_if_all_opponent_pieces_in_mills(self):
         # Black's three pieces form a mill at locations 0, 1, and 2.
         board = list("x" * 23)
         board[0] = BLACK
@@ -121,11 +121,8 @@ class TestMoveGenerator(unittest.TestCase):
 
         moves = generate_remove(board, WHITE)
 
-        # Any of the three Black pieces may be removed.
-        self.assertEqual(len(moves), 3)
-        for move in moves:
-            self.assertEqual(move.count(BLACK), 2)
-            self.assertEqual(move.count(WHITE), 1)
+        # Handout rule: no capture, the board is added unchanged.
+        self.assertEqual(moves, [board])
 
     def test_player_with_fewer_than_three_pieces_has_no_midgame_moves(self):
         board = list("x" * 23)

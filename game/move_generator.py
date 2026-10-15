@@ -148,8 +148,8 @@ def generate_remove(board: str, player: str) -> list[str]:
     """
     Generate board states after capturing an opponent's piece.
 
-    Prefer opponent pieces that are not in mills. If all opponent
-    pieces are in mills, any opponent piece may be captured.
+    Only opponent pieces that are not in mills may be captured. If all
+    opponent pieces are in mills, nothing is removed (handout rule).
     """
     validate_board(board)
     validate_player(player)
@@ -173,9 +173,9 @@ def generate_remove(board: str, player: str) -> list[str]:
         if not close_mill(location, board)
     ]
 
-    # If all opponent pieces are in mills, allow any capture.
+    # If all opponent pieces are in mills, the board is added unchanged.
     if not removable:
-        removable = opponent_locations
+        return [board]
 
     moves = []
 
