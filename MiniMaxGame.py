@@ -11,29 +11,23 @@ from game.minimax import minimax
 
 def static_estimation_game(board: str) -> int:
     """
-    Provisional midgame/endgame evaluation.
+    Midgame/endgame static estimate from Morris handout.
 
     Positive scores favor White; negative scores favor Black.
-    Verify this formula against the project specification.
     """
     white_pieces = count_pieces(board, WHITE)
     black_pieces = count_pieces(board, BLACK)
 
-    # Use flying rules when a player has reached three pieces.
-    phase = (
-        ENDGAME
-        if white_pieces == 3 or black_pieces == 3
-        else MIDGAME
-    )
+    black_moves = len(generate_moves(board, BLACK, MIDGAME))
 
-    white_moves = len(generate_moves(board, WHITE, phase))
-    black_moves = len(generate_moves(board, BLACK, phase))
+    if black_pieces <= 2:
+        return 10000
+    if white_pieces <= 2:
+        return -10000
+    if black_moves == 0:
+        return 10000
 
-    return (
-        10 * (white_pieces - black_pieces)
-        + white_moves
-        - black_moves
-    )
+    return 1000 * (white_pieces - black_pieces) - black_moves
 
 
 def main() -> None:
