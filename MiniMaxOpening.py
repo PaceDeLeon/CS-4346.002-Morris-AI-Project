@@ -4,17 +4,10 @@
 import argparse
 from pathlib import Path
 
-from game.board import WHITE, BLACK, validate_board
+from game.board import WHITE, validate_board
 from game.move_generator import OPENING
 from game.minimax import minimax
-
-
-def static_estimation_opening(board: str) -> int:
-    """Return the opening static estimate from the Morris handout."""
-    white_pieces = board.count(WHITE)
-    black_pieces = board.count(BLACK)
-
-    return white_pieces - black_pieces
+from game.evaluation import static_estimation_opening
 
 
 def main() -> None:

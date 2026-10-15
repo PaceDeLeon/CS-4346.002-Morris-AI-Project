@@ -5,29 +5,9 @@ import argparse
 from pathlib import Path
 
 from game.board import WHITE, BLACK, count_pieces, validate_board
-from game.move_generator import MIDGAME, ENDGAME, generate_moves
+from game.move_generator import MIDGAME, ENDGAME
 from game.minimax import minimax
-
-
-def static_estimation_game(board: str) -> int:
-    """
-    Midgame/endgame static estimate from Morris handout.
-
-    Positive scores favor White; negative scores favor Black.
-    """
-    white_pieces = count_pieces(board, WHITE)
-    black_pieces = count_pieces(board, BLACK)
-
-    black_moves = len(generate_moves(board, BLACK, MIDGAME))
-
-    if black_pieces <= 2:
-        return 10000
-    if white_pieces <= 2:
-        return -10000
-    if black_moves == 0:
-        return 10000
-
-    return 1000 * (white_pieces - black_pieces) - black_moves
+from game.evaluation import static_estimation_game
 
 
 def main() -> None:
