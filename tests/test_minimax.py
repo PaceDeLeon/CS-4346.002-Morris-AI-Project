@@ -86,7 +86,7 @@ class TestMinimax(unittest.TestCase):
 
     def test_two_black_pieces_scores_as_white_win(self):
         """Handout's static estimate scores two Black pieces as a win."""
-        from MiniMaxGame import static_estimation_game
+        from game.evaluation import static_estimation_game
 
         board = "WWWBB" + ("x" * 18)
 
