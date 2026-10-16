@@ -1,0 +1,219 @@
+CS 4346 Morris Game, Variant - Improved Static Estimation
+=========================================================
+
+Code:     game/improved_evaluation.py
+Programs: MiniMaxOpeningImproved.py, MiniMaxGameImproved.py
+          (same MINIMAX search, move generator, and input/output as
+          MiniMaxOpening.py / MiniMaxGame.py; only the estimate changes)
+
+All scores are from White's point of view: positive favors White.
+Non-terminal midgame/endgame scores are kept strictly between -10000 and
+10000 so they never look like a win or a loss.
+
+
+1. Features
+-----------
+
+Each feature is computed for both players and used as a difference
+(White minus Black), so the function treats both sides the same way.
+
+  pieces      Number of pieces on the board.
+
+  threats     Number of empty spots where the player can close a mill on
+              their next move: two of their pieces are on a line, the third
+              spot is empty, and they can get a piece there.
+                - Opening: any piece can be placed there.
+                - Midgame: one of their pieces outside that line must be
+                  adjacent to the empty spot.
+                - Endgame (exactly 3 pieces): the third piece can hop there.
+
+  mobility    Number of (piece, destination) moves: adjacent empty spots,
+              or every empty spot for a player with 3 pieces in the
+              midgame/endgame. In the opening, hopping does not apply, so it
+              counts adjacent empty spots only (room to move once the
+              midgame starts).
+
+  blocked     Number of the player's pieces with no empty neighbor
+              (midgame/endgame only; 0 for a player who can hop).
+
+  mills       Number of completed mills owned by the player
+              (midgame/endgame only).
+
+  terminal    Midgame/endgame wins and losses:
+                Black has 2 or fewer pieces   -> +10000
+                White has 2 or fewer pieces   -> -10000
+                Black has no legal move       -> +10000
+                White has no legal move       -> -10000   (new)
+
+
+2. Why these features
+---------------------
+
+pieces   - Material decides the game: a player reduced to 2 pieces loses.
+           It stays the dominant term, as in the handout.
+
+threats  - A mill is the only way to win material, so a position that can
+           close a mill next move is close to winning a piece. Two or more
+           threats are especially strong because the opponent can block only
+           one per move. The handout opening estimate counts pieces only, so
+           every placement that does not capture right away gets the same
+           score and the tie is broken by board index.
+
+mobility - The second way to win is to leave the opponent with no legal move.
+           The handout counts only Black's moves; counting both sides also
+           rewards White for keeping its own pieces free. In the opening,
+           spots with free neighbors matter because the midgame is about
+           moving.
+
+blocked  - A piece with no empty neighbor cannot help form or block a mill.
+           Blocked opponent pieces are a step toward a no-move win; our own
+           blocked pieces are a weakness.
+
+mills    - A completed mill can be opened and closed again to keep
+           capturing, and its pieces cannot be captured. It gets a small
+           weight because the gain comes from reopening it, which threats
+           already measure.
+
+terminal - The handout midgame estimate checks "no legal move" for Black
+           only. If White is completely blocked, the handout scores it as an
+           ordinary position instead of a loss. For example, in
+           WWWWBBBxBBxxxBxxxxxxxxx White's a0, d0, g0, b1 cannot move; the
+           handout gives -2009 and the improved version gives -10000.
+
+
+3. How they are combined
+------------------------
+
+A weighted sum of the White-minus-Black differences.
+
+Opening:
+  100 * pieces + 30 * threats + 3 * mobility
+
+Midgame/endgame (after the terminal checks):
+  1000 * pieces + 50 * threats + 20 * blocked(Black - White)
+  + 10 * mills + 5 * mobility
+
+then limited to the range -9999 .. 9999.
+
+The weights are ordered so that one piece outweighs any realistic
+combination of the positional features (for example, 1000 per piece versus
+at most a few threats at 50 each in the midgame). The positional features
+therefore decide between moves that come out even in material, which is
+exactly where the handout estimate has nothing to go on.
+
+
+4. Why it is better than the handout estimate
+---------------------------------------------
+
+- It still agrees with the handout on material: when one move wins a piece
+  and another does not, both estimates prefer the capture.
+- When material comes out the same at the search horizon, the handout
+  estimate falls back to move order (first move found). The improved
+  estimate instead prefers moves that create mill threats, block the
+  opponent's threats, and keep pieces mobile.
+- It recognizes a blocked White as a loss.
+- It looks one step past the search horizon: a threat at a leaf position
+  is a capture that the search would only see one ply deeper.
+
+
+5. Example positions (depth 3)
+------------------------------
+
+Each pair was produced by running the original and improved programs on
+the same input file. The search, move order, and tie-break are identical,
+so the different move comes only from the estimate.
+
+Board locations: a0 d0 g0 b1 d1 f1 c2 e2 a3 b3 c3 e3 f3 g3 c4 d4 e4 b5 d5 f5
+a6 d6 g6 = indices 0..22.
+
+
+Example 1 - Opening: creating more mill threats
+  Input:     xxxxWxxWxxBWBxxBxxWxxxB
+
+  python MiniMaxOpening.py           Board Position: xxWxWxxWxxBWBxxBxxWxxxB
+                                     MINIMAX estimate: 2
+                                     (White places at g0)
+
+  python MiniMaxOpeningImproved.py   Board Position: xxxxWWxWxxBWBxxBxxWxxxB
+                                     MINIMAX estimate: 257
+                                     (White places at f1)
+
+  Why f1: it creates three mill threats at once: b1 (b1-d1-f1), g0
+  (g0-f1-e2), and e4 (e2-e3-e4). g0 creates only two (f1 and e4). Black can
+  block only one per move, so f1 leaves White more ways to close a mill
+  even after Black blocks or builds its own threat. The handout estimate
+  sees only the piece count, which is the same after every placement here,
+  so it picks g0 because it comes first in board order.
+
+
+Example 2 - Opening: which piece to capture
+  Input:     xxxxxxxWWWxBxxxBxxBxxxx
+
+  python MiniMaxOpening.py           Board Position: xxxxxxxWWWWBxxxxxxBxxxx
+                                     MINIMAX estimate: 2
+                                     (White places at c3, closes a3-b3-c3,
+                                      removes Black's d4)
+
+  python MiniMaxOpeningImproved.py   Board Position: xxxxxxxWWWWBxxxBxxxxxxx
+                                     MINIMAX estimate: 212
+                                     (White places at c3, closes a3-b3-c3,
+                                      removes Black's d5)
+
+  Why d5: Black had d4 and d5 in a line with d6 empty (a Black mill
+  threat). Removing either piece stops it, so the handout estimate sees
+  both captures as equal and takes d4 by board order. d5 is a junction
+  point with four neighbors (d4, b5, f5, d6), while d4 has three, so
+  removing d5 takes away more of Black's future mobility and leaves
+  Black's remaining pieces further apart.
+
+
+Example 3 - Midgame: blocking the opponent's mill threat
+  Input:     WxxBBxWWxBWBBWWxWWBxxxx
+
+  python MiniMaxGame.py              Board Position: WxxBBxWWxBWBBWxWWWBxxxx
+                                     MINIMAX estimate: 1993
+                                     (White moves c4 -> d4)
+
+  python MiniMaxGameImproved.py      Board Position: WxxBBWWxxBWBBWWxWWBxxxx
+                                     MINIMAX estimate: 2070
+                                     (White moves e2 -> f1)
+
+  Why e2 -> f1: Black has b1 and d1 with f1 empty, and Black's f3 can move
+  into f1 to close b1-d1-f1. The handout's choice ignores this: its best
+  line lets Black play f3 -> f1 and capture White's c2, and White wins the
+  piece back afterward. The improved move occupies f1, removing Black's
+  only mill threat, and keeps White's c2-c3-c4 mill intact. White is
+  already two pieces ahead, so preventing Black's capture keeps that
+  advantage without relying on a trade.
+
+
+Example 4 - Midgame: which piece to capture after closing a mill
+  Input:     xxWxxBBWxBBBWxWWxWWWWBB
+
+  python MiniMaxGame.py              Board Position: xxWxxxBWxBBBWxWWWWWxWBB
+                                     MINIMAX estimate: 3995
+                                     (White moves f5 -> e4, closes
+                                      c4-d4-e4, removes Black's f1)
+
+  python MiniMaxGameImproved.py      Board Position: xxWxxBBWxBBBWxWWWWWxWxB
+                                     MINIMAX estimate: 4105
+                                     (White moves f5 -> e4, closes
+                                      c4-d4-e4, removes Black's d6)
+
+  Why d6: removing d6 opens the d4-d5-d6 line, and White's a6 is next to
+  d6, so White immediately has a new mill threat there. Black has to spend
+  its next move blocking d6 (with g6), while White keeps the e4/f5 piece
+  that can move back and forth between c4-d4-e4 and b5-d5-f5, closing a
+  mill on each move. The handout estimate counts the same number of pieces
+  after every capture choice, so it removes f1, the first Black piece in
+  board order.
+
+
+6. Limitations
+--------------
+
+- Weights were chosen by reasoning about the game, not tuned by playing
+  many games.
+- Threats are counted per empty spot. A threat the opponent can block on
+  their very next move counts the same as one they cannot block.
+- The estimate does not know whose turn it is at the leaf position.
