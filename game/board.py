@@ -137,3 +137,10 @@ def empty_locations(board: str) -> list[int]:
         for location, piece in enumerate(board)
         if piece == EMPTY
     ]
+
+
+def swap_colors(board: str) -> str:
+    """Swap every W and B on the board (handout's Black-move method)."""
+    validate_board(board)
+
+    return board.translate(str.maketrans({WHITE: BLACK, BLACK: WHITE}))

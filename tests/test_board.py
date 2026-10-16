@@ -14,6 +14,7 @@ from game.board import (
     close_mill,
     count_pieces,
     empty_locations,
+    swap_colors,
 )
 
 
@@ -162,7 +163,12 @@ class TestBoard(unittest.TestCase):
             expected_mills,
             "The mill combinations do not match the expected board layout",
         )
-        
+
+    def test_swap_colors_swaps_pieces_and_keeps_empty(self):
+        board = "WWBx" + EMPTY * 19
+
+        self.assertEqual(swap_colors(board), "BBWx" + EMPTY * 19)
+        self.assertEqual(swap_colors(swap_colors(board)), board)
 
 
 if __name__ == "__main__":
