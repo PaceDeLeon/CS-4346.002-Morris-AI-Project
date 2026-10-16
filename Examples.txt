@@ -1,0 +1,99 @@
+CS 4346 Morris Game, Variant - MINIMAX vs. ALPHA-BETA examples
+==============================================================
+
+For each case, MINIMAX and ALPHA-BETA were run on the same input board at
+the same depth. Both use the same move generator, the same handout static
+estimation, the same move order, and the same tie-break (the first best
+move found is kept). As expected, both return the same board position and
+the same estimate; ALPHA-BETA evaluates fewer positions in every case.
+
+Command format:
+  python <program>.py <input board file> <output board file> <depth>
+
+
+Example 1 - Opening, empty board (board1.txt), depth 3
+--------------------------------------------------------
+Input:  xxxxxxxxxxxxxxxxxxxxxxx
+
+  MiniMaxOpening.py                    ABOpening.py
+  Board Position: Wxxxxxxxxxxxxxxxxxxxxxx    Board Position: Wxxxxxxxxxxxxxxxxxxxxxx
+  Positions evaluated: 10626                 Positions evaluated: 504
+  MINIMAX estimate: 1                        MINIMAX estimate: 1
+
+
+Example 2 - Opening (board2.txt), depth 3
+-----------------------------------------
+Input:  WWxBBBBxxWxxxxxxxxxxxxx
+
+  MiniMaxOpening.py                    ABOpening.py
+  Board Position: WWWBBBxxxWxxxxxxxxxxxxx    Board Position: WWWBBBxxxWxxxxxxxxxxxxx
+  Positions evaluated: 3656                  Positions evaluated: 244
+  MINIMAX estimate: 1                        MINIMAX estimate: 1
+
+White places at g0, closing the a0-d0-g0 mill, and removes Black's c2
+(the only Black piece not in a mill; b1-d1-f1 is a Black mill).
+
+
+Example 3 - Midgame (handout example 1), depth 3
+------------------------------------------------
+Input:  xxxxxBxWWWWWBBBBxxxxxxx
+
+  MiniMaxGame.py                       ABGame.py
+  Board Position: WxxxxBxWxWWWBBBBxxxxxxx    Board Position: WxxxxBxWxWWWBBBBxxxxxxx
+  Positions evaluated: 677                   Positions evaluated: 233
+  MINIMAX estimate: 991                      MINIMAX estimate: 991
+
+
+Example 4 - Midgame (handout example 2), depth 3
+------------------------------------------------
+Input:  WxWWxWWWWWBBBBBBBBxxxxx
+
+  MiniMaxGame.py                       ABGame.py
+  Board Position: xWWWxWWWWWBBBBBBBBxxxxx    Board Position: xWWWxWWWWWBBBBBBBBxxxxx
+  Positions evaluated: 544                   Positions evaluated: 129
+  MINIMAX estimate: 993                      MINIMAX estimate: 993
+
+
+Example 5 - Endgame, Black has 3 pieces and hops, depth 4
+---------------------------------------------------------
+Input:  WxxWxxxBxxBxxxBxxxxxWxW
+
+  MiniMaxGame.py                       ABGame.py
+  Board Position: WxxxxxWBxxBxxxBxxxxxWxW    Board Position: WxxxxxWBxxBxxxBxxxxxWxW
+  Positions evaluated: 365523                Positions evaluated: 10061
+  MINIMAX estimate: -51                      MINIMAX estimate: -51
+
+
+Summary
+-------
+  Example  Phase    Depth  MINIMAX evaluated  ALPHA-BETA evaluated  Same move & estimate
+  1        opening  3      10626              504                   yes
+  2        opening  3      3656               244                   yes
+  3        midgame  3      677                233                   yes
+  4        midgame  3      544                129                   yes
+  5        endgame  4      365523             10061                 yes
+
+
+Playing for Black (Part III)
+============================
+
+MiniMaxOpeningBlack.py and MiniMaxGameBlack.py use the color-swap method
+from the handout: swap W and B in the input board, compute White's best
+move, then swap the colors of the selected board back.
+
+Because the search is done on the swapped board, the printed MINIMAX
+estimate is from Black's point of view (positive values favor Black).
+
+Example 6 - MiniMaxOpeningBlack.py, board2.txt, depth 3
+  Input:          WWxBBBBxxWxxxxxxxxxxxxx
+  Board Position: WWBBBBBxxWxxxxxxxxxxxxx
+  Positions evaluated by static estimation: 3840
+  MINIMAX estimate: 2
+  Black places at g0, blocking White's a0-d0-g0 mill.
+
+Example 7 - MiniMaxGameBlack.py, depth 3
+  Input:          xxxxxBxWWWWWBBBBxxxxxxx
+  Board Position: xxxxxBxWWWWWxBBBxxxBxxx
+  Positions evaluated by static estimation: 685
+  MINIMAX estimate: 993
+  Black moves f3 -> f5.
