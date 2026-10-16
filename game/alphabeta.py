@@ -3,11 +3,20 @@
 Same signature, move order, and tie-breaking as game.minimax, so for the
 same position and depth it returns the same move and estimate. Only the
 number of positions evaluated differs.
+
+Optional move_number (used by TournamentAgent.py): the move number about
+to be played at the root. Each ply then uses opening rules while its move
+number is 18 or less and midgame/endgame rules after that, so a search
+can cross from the opening into the midgame. Without it, phase is fixed
+for the whole tree, as in the handout programs.
 """
 
 from game.board import WHITE, BLACK, validate_board, validate_player
 from game.minimax import EvaluationFunction, MinimaxResult
-from game.move_generator import PHASES, generate_moves
+from game.move_generator import PHASES, OPENING, MIDGAME, generate_moves
+
+
+OPENING_MOVES = 18
 
 
 def alphabeta(
@@ -16,6 +25,7 @@ def alphabeta(
     player: str,
     phase: str,
     evaluate: EvaluationFunction,
+    move_number: int | None = None,
 ) -> MinimaxResult:
     """Find the best next board using minimax with alpha-beta pruning."""
     validate_board(board)
@@ -32,11 +42,18 @@ def alphabeta(
     if not callable(evaluate):
         raise TypeError("evaluate must be a callable function.")
 
+    if move_number is not None:
+        if not isinstance(move_number, int) or move_number < 1:
+            raise ValueError("Move number must be a positive integer.")
+        phase = phase_for_move(move_number)
+
     moves = generate_moves(board, player, phase)
 
     # No legal move: none to choose, return static estimate
     if not moves:
         return MinimaxResult(board, evaluate(board), 1)
+
+    next_move_number = None if move_number is None else move_number + 1
 
     # White is MAX; Black is MIN.
     maximizing = player == WHITE
@@ -56,6 +73,7 @@ def alphabeta(
             evaluate,
             alpha,
             beta,
+            next_move_number,
         )
 
         positions_evaluated += evaluated
@@ -90,12 +108,17 @@ def _search(
     evaluate: EvaluationFunction,
     alpha: float,
     beta: float,
+    move_number: int | None = None,
 ) -> tuple[int | float, int]:
     """Search a subtree and return its score and static-evaluation count."""
 
     # At depth zero, score this leaf with the static estimate.
     if depth == 0:
         return evaluate(board), 1
+
+    if move_number is not None:
+        phase = phase_for_move(move_number)
+        move_number += 1
 
     moves = generate_moves(board, player, phase)
 
@@ -118,6 +141,7 @@ def _search(
             evaluate,
             alpha,
             beta,
+            move_number,
         )
 
         positions_evaluated += evaluated
@@ -140,6 +164,11 @@ def _search(
             beta = min(beta, best_score)
 
     return best_score, positions_evaluated
+
+
+def phase_for_move(move_number: int) -> str:
+    """Moves 1-18 place pieces; every later move uses movement rules."""
+    return OPENING if move_number <= OPENING_MOVES else MIDGAME
 
 
 def _opponent(player: str) -> str:

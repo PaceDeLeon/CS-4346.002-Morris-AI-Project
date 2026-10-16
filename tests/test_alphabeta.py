@@ -6,7 +6,7 @@ from game.alphabeta import alphabeta
 from game.board import WHITE, BLACK
 from game.evaluation import static_estimation_opening, static_estimation_game
 from game.minimax import minimax
-from game.move_generator import OPENING, MIDGAME
+from game.move_generator import OPENING, MIDGAME, generate_moves
 
 
 CASES = [
@@ -42,6 +42,47 @@ class TestAlphaBeta(unittest.TestCase):
                 ab = alphabeta(board, 3, WHITE, phase, evaluate)
 
                 self.assertLess(ab.positions_evaluated, mm.positions_evaluated)
+
+
+    def test_move_number_matches_fixed_phase_away_from_boundary(self):
+        board = "WWxBBBBxxWxxxxxxxxxxxxx"
+        evaluate = static_estimation_opening
+
+        self.assertEqual(
+            alphabeta(board, 3, WHITE, OPENING, evaluate, move_number=1),
+            alphabeta(board, 3, WHITE, OPENING, evaluate),
+        )
+
+        board = "xxxxxBxWWWWWBBBBxxxxxxx"
+        evaluate = static_estimation_game
+
+        self.assertEqual(
+            alphabeta(board, 3, WHITE, MIDGAME, evaluate, move_number=19),
+            alphabeta(board, 3, WHITE, MIDGAME, evaluate),
+        )
+
+    def test_move_number_switches_to_midgame_after_move_18(self):
+        # Black places its ninth piece at move 18; White then moves pieces.
+        board = "WBWWxBBxWBBxxWBxxWBWWxx"
+        leaves = []
+
+        def record(position):
+            leaves.append(position)
+            return position.count(WHITE)
+
+        result = alphabeta(board, 2, BLACK, OPENING, record, move_number=18)
+
+        placements = generate_moves(board, BLACK, OPENING)
+        white_moves = {
+            move
+            for child in placements
+            for move in generate_moves(child, WHITE, MIDGAME)
+        }
+
+        self.assertIn(result.best_board, placements)
+        self.assertTrue(leaves)
+        for leaf in leaves:
+            self.assertIn(leaf, white_moves)
 
 
 if __name__ == "__main__":
