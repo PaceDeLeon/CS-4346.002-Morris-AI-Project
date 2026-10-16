@@ -1,4 +1,10 @@
-"""Find White's best move during the Morris midgame/endgame."""
+"""Find White's best move during the Morris midgame/endgame.
+
+MINIMAX search:     game/minimax.py
+Move generator:     game/move_generator.py
+Static estimation:  game/evaluation.py (static_estimation_game)
+Input/output:       game/cli.py
+"""
 
 from game.board import WHITE
 from game.cli import run
